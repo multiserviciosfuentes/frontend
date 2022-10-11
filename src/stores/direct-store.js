@@ -18,6 +18,8 @@ export const useDirectStore = defineStore('direct', () => {
   const remove = id => {
     return DirectService.delete(id)
       .then(response => {
+        let movementStore = useMovementStore()
+        movementStore.getAll()
         return Promise.resolve(response)
       })
       .catch(e => {

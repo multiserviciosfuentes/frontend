@@ -1,5 +1,5 @@
 <template>
-  <invoice-component title="COMPROBANTES" :type="EType.sale"></invoice-component>
+  <invoice-component title="VENTAS" :type="EType.sale"></invoice-component>
 </template>
 
 <script setup>

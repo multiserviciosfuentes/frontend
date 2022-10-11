@@ -1,14 +1,43 @@
 <template>
   <div>
-    <a-typography-title :level="3">
-      {{ title }}
-    </a-typography-title>
+    <a-page-header style="border: 1px solid rgb(235, 237, 240)" :title="title">
+      <template #extra v-if="type === EType.quotation">
+        <a-row type="flex">
+          <a-statistic
+            title="Vendido"
+            :value-style="{ color: '#3f8600' }"
+            :value="invoices.filter(inv => inv.status === EStatus.sold).length"
+          >
+            <template #prefix>
+              <arrow-up-outlined />
+            </template>
+          </a-statistic>
+          <a-statistic
+            title="Rechazado"
+            :value-style="{ color: '#cf1322' }"
+            :style="{
+              margin: '0 32px',
+            }"
+            :value="invoices.filter(inv => inv.status === EStatus.rejected).length"
+          >
+            <template #prefix>
+              <arrow-down-outlined />
+            </template>
+          </a-statistic>
+          <a-statistic
+            title="Proceso"
+            :value-style="{ color: '#3f8600' }"
+            :value="invoices.filter(inv => inv.status === EStatus.process).length"
+          />
+        </a-row>
+      </template>
+    </a-page-header>
 
     <a-table
       class="ant-table-striped"
       :row-class-name="(_record, index) => (index % 2 === 1 ? 'table-striped' : null)"
       :row-key="_record => _record.id"
-      :columns="type === EType.quotation ? columnsQuotationUser : columnsSale"
+      :columns="type === EType.quotation ? columnsQuotationUser : type === EType.sale ? columnsSale : columnsBuy"
       :data-source="repositoriesSearchQuery"
       :loading="loadingInvoices"
       :pagination="false"
@@ -21,16 +50,30 @@
         <a-row type="flex">
           <a-col flex="auto">
             <a-space :size="20">
-              <a-button v-show="type === EType.quotation" type="primary" @click="handleAddVoucher">
+              <a-button v-if="type === EType.quotation" type="primary" @click="handleAddVoucher">
                 <template #icon>
                   <plus-outlined></plus-outlined>
                 </template>
                 Nueva cotización
               </a-button>
-              <!-- <span v-else>-></span> -->
+              <a-button v-else-if="type === EType.sale" type="primary" @click="handleAddVoucher">
+                <template #icon>
+                  <plus-outlined></plus-outlined>
+                </template>
+                Nueva orden de venta
+              </a-button>
+              <a-button v-else-if="type === EType.buy" type="primary" @click="handleAddVoucher">
+                <template #icon>
+                  <plus-outlined></plus-outlined>
+                </template>
+                Nueva orden de compra
+              </a-button>
+
               <a-input-group compact>
                 <a-select :style="{ width: '150px' }" v-model:value="searchType">
-                  <a-select-option :value="ESearch.businessEntity">CLIENTE</a-select-option>
+                  <a-select-option :value="ESearch.businessEntity">
+                    {{ type === EType.buy ? 'PROVEEDOR' : 'CLIENTE' }}
+                  </a-select-option>
                   <a-select-option :value="ESearch.code" v-if="type !== (EType.quotation || EType.purchaseOrder)"
                     >COMPROBANTE</a-select-option
                   >
@@ -38,7 +81,9 @@
                 <a-input-search
                   v-model:value="searchQuery"
                   :placeholder="
-                    searchType === ESearch.businessEntity ? 'Buscar cliente' : 'Buscar número de comprobante'
+                    searchType === ESearch.businessEntity
+                      ? `Buscar ${type === EType.buy ? 'proveedor' : 'cliente'}`
+                      : 'Buscar número de comprobante'
                   "
                   :style="{ width: '400px', textTransform: 'uppercase' }"
                 />
@@ -61,9 +106,22 @@
           </span>
         </template>
 
+        <template v-else-if="column.dataIndex === 'subtotal'">
+          <span v-if="record.status === EStatus.sold || record.status === EStatus.bought">
+            {{ currency(record.total / (1 + IGV / 100), record.typeCurrency === ETypeCurrency.soles ? 'S/' : '$', 2) }}
+          </span>
+          <span v-else>
+            {{ currency(record.total, record.typeCurrency === ETypeCurrency.soles ? 'S/' : '$', 2) }}
+          </span>
+        </template>
+
         <template v-else-if="column.dataIndex === 'total'">
           <span>
-            {{ currency(record.total, 'S/', 2) }}
+            {{
+              record.status === EStatus.sold || record.status === EStatus.bought
+                ? currency(record.total, record.typeCurrency === ETypeCurrency.soles ? 'S/' : '$', 2)
+                : '-'
+            }}
           </span>
         </template>
 
@@ -91,18 +149,6 @@
           </span>
         </template>
 
-        <template v-else-if="column.dataIndex === 'number' && type === EType.sale">
-          <span>
-            {{
-              record.numberInvoice
-                ? record.numberInvoice
-                : record.numberBill
-                ? record.numberBill
-                : record.numberProforma
-            }}
-          </span>
-        </template>
-
         <template v-else-if="column.key === 'operation'">
           <a v-if="record.status !== EStatus.sold" @click="handleEditVoucher(record.id)">Editar</a>
           <a v-else disabled>Editar</a>
@@ -110,13 +156,11 @@
           <a-dropdown>
             <template #overlay>
               <a-menu>
-                <a-menu-item @click="formPrintModel(record)">Descargar PDF</a-menu-item>
+                <a-menu-item @click="formPrintModel(record)" :disabled="record.status === EStatus.sold"
+                  >Descargar PDF</a-menu-item
+                >
 
-                <a-menu-item
-                  @click="handleShowSoldQuotation(record.id)"
-                  :disabled="
-                    record.numberInvoice !== null || record.numberBill !== null || record.numberProforma !== null
-                  "
+                <a-menu-item @click="handleSoldQuotation(record.id)" :disabled="record.status === EStatus.sold"
                   >Vendido</a-menu-item
                 >
                 <a-menu-item
@@ -136,15 +180,17 @@
           </a-dropdown>
         </template>
 
-        <template v-else-if="column.key === 'operationSale'">
+        <template v-else-if="column.key === 'operationBuy'">
           <a-dropdown>
             <template #overlay>
               <a-menu>
-                <a-menu-item @click="formPrintModel(record)">Cotización PDF</a-menu-item>
+                <!-- <a-menu-item @click="onPrintOrder(record)" :disabled="!user.roles.some(role => role === ERole.admin)"
+                  >Descargar PDF</a-menu-item
+                > -->
                 <a-menu-item
-                  @click="handleRejectedQuotation(record)"
-                  :disabled="!user.roles.some(role => role === ERole.moderator || role === ERole.admin)"
-                  >Rechazado</a-menu-item
+                  @click="handleEditVoucher(record.id)"
+                  :disabled="!user.roles.some(role => role === ERole.admin)"
+                  >Editar</a-menu-item
                 >
                 <a-menu-item
                   @click="handleDeleteVoucher(record.id)"
@@ -223,13 +269,6 @@
         @cancel="cancelPrint"
       >
         <a-form ref="formRefPrint" :model="formPrint" layout="vertical" name="form_in_modal">
-          <!-- <a-form-item name="igv" class="collection-create-form_last-form-item">
-            <a-radio-group v-model:value="formPrint.igv">
-              <a-radio value="con">CON IGV</a-radio>
-              <a-radio value="sin">SIN IGV</a-radio>
-            </a-radio-group>
-          </a-form-item> -->
-
           <a-form-item name="wayToPay" label="Forma de pago">
             <a-input v-model:value="formPrint.wayToPay" />
           </a-form-item>
@@ -263,19 +302,28 @@
 import useInvoices from '@/sale/composables/use-invoices'
 import useInvoicesVariables from '@/sale/composables/use-invoices-variables'
 import { useInvoiceStore } from '@/stores/invoice-store'
-import { computed, createVNode, inject, onMounted, reactive, ref, toRefs } from 'vue'
+import { computed, createVNode, reactive, ref } from 'vue'
 import { calcRode, dateParse, currency } from '@/shared/methods'
 import FormInvoiceComponent from './form-invoice-component.vue'
-import { DownOutlined, ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import {
+  DownOutlined,
+  ExclamationCircleOutlined,
+  PlusOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+} from '@ant-design/icons-vue'
 import Invoice from '../models/invoice'
 import dayjs from 'dayjs'
 import _ from 'lodash'
 import { Form, message, Modal } from 'ant-design-vue'
 import useQuotationPrintAutotable from './composables/use-quotation-print-autotable'
 import Movement from '@/inventory/models/movement'
-import { EType, EStatus, ESearch, ETypeVoucher, ETypeMovement, ERole } from '@/shared/enums'
+import { EType, EStatus, ESearch, ETypeVoucher, ETypeMovement, ERole, ETypeCurrency } from '@/shared/enums'
 import { useAuthUserStore } from '@/stores/auth-user-store'
 import useInvoicesSearch from '../composables/use-invoices-search'
+import { IGV } from '@/shared/utils/constantes'
+import useSaleOrderPrint from '@/inventory/composables/prints/use-sale-order-print';
+
 
 const props = defineProps({
   title: {
@@ -300,8 +348,10 @@ const isAdd = ref(false)
 // composables
 const { repositories: invoices } = useInvoices(props.type)
 const { repositoriesSearchQuery, searchQuery, searchType } = useInvoicesSearch(invoices, props.type)
-const { columnsSale, innerColumns, columnsQuotation, columnsQuotationUser, handleChangeInvoice } =
+const { columnsSale, columnsBuy, innerColumns, columnsQuotation, columnsQuotationUser, handleChangeInvoice } =
   useInvoicesVariables()
+
+const { onPrint: onPrintOrder} = useSaleOrderPrint()
 
 // computeds
 const loadingInvoices = computed(() => invoiceStore.loading)
@@ -314,9 +364,21 @@ const handleAddVoucher = () => {
 
   formInvoice.value = new Invoice()
   formInvoice.value.dateVoucher = dayjs()
-  formInvoice.value.status = EStatus.process
-  formInvoice.value.type = EType.sale
+  formInvoice.value.status =
+    props.type === EType.quotation ? EStatus.process : props.type === EType.sale ? EStatus.sold : EStatus.bought
+  formInvoice.value.type = props.type === EType.quotation || props.type === EType.sale ? EType.sale : EType.buy
   formInvoice.value.user = { id: authUserStore.userCurrent.id }
+
+  if (props.type !== EType.quotation) {
+    formInvoice.value.typeVoucher = ETypeVoucher.invoice
+    formInvoice.value.igv = IGV
+  }
+
+  if (props.type === EType.sale) {
+    formInvoice.value.movement = new Movement(ETypeMovement.output, 'SALIDA POR ORDEN DE VENTA')
+  } else if (props.type == EType.buy) {
+    formInvoice.value.movement = new Movement(ETypeMovement.input, 'INGRESO POR ORDEN DE COMPRA')
+  }
 }
 
 const handleEditVoucher = id => {
@@ -363,11 +425,10 @@ const handleRejectedQuotation = quotation => {
     async onOk() {
       let objQuotation = _.cloneDeep(quotation)
       objQuotation.status = EStatus.rejected
-      objQuotation.typeVoucher = null
-      objQuotation.numberInvoice = null
-      objQuotation.numberBill = null
-      objQuotation.numberProforma = null
+      objQuotation.numberSaleOrder = null
+      objQuotation.numberPurchaseOrder = null
       objQuotation.movement = null
+      objQuotation.igv = null
 
       try {
         await invoiceStore.patch(objQuotation)
@@ -409,36 +470,22 @@ const handleShowSoldQuotation = id => {
   formInvoice.value.contact = formInvoice.value.contact && formInvoice.value.contact.id
 }
 
-const handleSoldQuotation = () => {
-  validate()
-    .then(() => {
-      let objQuotation = _.cloneDeep(formInvoice.value)
-      objQuotation.status = EStatus.sold
-      objQuotation.typeVoucher = formStateModelSold.typeVoucher
-      objQuotation.numberInvoice = null
-      objQuotation.numberBill = null
-      objQuotation.numberProforma = null
+const handleSoldQuotation = quotationId => {
+  Modal.confirm({
+    title: 'Vender cotización?',
+    icon: createVNode(ExclamationCircleOutlined),
 
-      switch (formStateModelSold.typeVoucher) {
-        case ETypeVoucher.invoice:
-          objQuotation.numberInvoice = formStateModelSold.number
-          break
-        case ETypeVoucher.bill:
-          objQuotation.numberBill = formStateModelSold.number
-          break
-        case ETypeVoucher.proforma:
-          objQuotation.numberProforma = formStateModelSold.number
-          break
-        default:
-          break
-      }
-
-      objQuotation.numberPurchaseOrder = null
-      objQuotation.movement = new Movement(ETypeMovement.output, 'VENTA DE COTIZACIÓN')
-
+    onOk() {
+      formInvoice.value = _.cloneDeep(invoices.value.filter(item => item.id === quotationId)[0])
+      formInvoice.value.dateVoucher = dayjs(formInvoice.value.dateVoucher)
+      formInvoice.value.businessEntity = formInvoice.value.businessEntity.id
+      formInvoice.value.contact = formInvoice.value.contact && formInvoice.value.contact.id
+      formInvoice.value.status = EStatus.sold
+      formInvoice.value.movement = new Movement(ETypeMovement.output, 'VENTA DE COTIZACIÓN')
+      formInvoice.value.igv = IGV
       confirmLoadingModalSold.value = true
-      invoiceStore
-        .patch(objQuotation)
+      return invoiceStore
+        .patch(formInvoice.value)
         .then(response => {
           message.success('Cotización vendida')
           resetFields()
@@ -450,10 +497,56 @@ const handleSoldQuotation = () => {
         .finally(() => {
           confirmLoadingModalSold.value = false
         })
-    })
-    .catch(err => {
-      console.log(err)
-    })
+    },
+
+    onCancel() {},
+  })
+
+  // validate()
+  //   .then(() => {
+  //     let objQuotation = _.cloneDeep(formInvoice.value)
+  //     objQuotation.status = EStatus.sold
+  //     objQuotation.typeVoucher = formStateModelSold.typeVoucher
+  //     objQuotation.numberInvoice = null
+  //     objQuotation.numberBill = null
+  //     objQuotation.numberProforma = null
+  //     objQuotation.igv = IGV
+
+  //     switch (formStateModelSold.typeVoucher) {
+  //       case ETypeVoucher.invoice:
+  //         objQuotation.numberInvoice = formStateModelSold.number
+  //         break
+  //       case ETypeVoucher.bill:
+  //         objQuotation.numberBill = formStateModelSold.number
+  //         break
+  //       case ETypeVoucher.proforma:
+  //         objQuotation.numberProforma = formStateModelSold.number
+  //         break
+  //       default:
+  //         break
+  //     }
+
+  //     objQuotation.numberPurchaseOrder = null
+  //     objQuotation.movement = new Movement(ETypeMovement.output, 'VENTA DE COTIZACIÓN')
+
+  //     confirmLoadingModalSold.value = true
+  //     invoiceStore
+  //       .patch(objQuotation)
+  //       .then(response => {
+  //         message.success('Cotización vendida')
+  //         resetFields()
+  //         showModalSold.value = false
+  //       })
+  //       .catch(err => {
+  //         message.error(err)
+  //       })
+  //       .finally(() => {
+  //         confirmLoadingModalSold.value = false
+  //       })
+  //   })
+  //   .catch(err => {
+  //     console.log(err)
+  //   })
 }
 
 // operation quotation
@@ -486,10 +579,6 @@ const okPrint = () => {
 const cancelPrint = () => {
   formRefPrint.value.resetFields()
 }
-
-onMounted(() => {
-  // console.log(props.type)
-})
 </script>
 
 <style lang="less" scoped>

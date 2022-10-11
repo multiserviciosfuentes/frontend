@@ -1,6 +1,7 @@
 <template>
   <div>
-    <a-typography-title :level="3">CONTACTOS</a-typography-title>
+    <a-page-header style="border: 1px solid rgb(235, 237, 240)" title="CONTACTOS">
+    </a-page-header>
 
     <!--    table Contact-->
     <a-table

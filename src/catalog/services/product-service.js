@@ -17,7 +17,9 @@ class ProductService {
       name: product.name.toUpperCase(),
       unitOfMeasurement: product.unitOfMeasurement,
       price: product.price,
+      priceSale: product.priceSale,
       pathImage: product.pathImage,
+      typeCurrency: product.typeCurrency,
       nicknames: product.nicknames,
     })
   }
@@ -27,7 +29,9 @@ class ProductService {
       name: product.name.toUpperCase(),
       unitOfMeasurement: product.unitOfMeasurement,
       price: product.price,
+      priceSale: product.priceSale,
       pathImage: product.pathImage,
+      typeCurrency: product.typeCurrency,
       nicknames: product.nicknames,
     })
   }

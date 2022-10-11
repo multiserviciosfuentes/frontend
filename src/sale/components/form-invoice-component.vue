@@ -17,132 +17,153 @@
         </a-tag>
       </span>
     </template>
-    <a-space :size="20" direction="horizontal">
-      <a-form :style="{ width: '400px' }" :label-col="labelCol" :wrapper-col="wrapperCol">
-        <a-form-item label="Num">
-          <a-tag style="width: 250px"> {{ num }}</a-tag>
-        </a-form-item>
 
-        <a-form-item ref="name" label="Fecha" name="dateVoucher">
-          <a-date-picker v-model:value="invoice.dateVoucher" format="DD/MM/YYYY" size="small" :style="styleInput" />
-        </a-form-item>
-
-        <a-form-item label="Cliente" v-bind="validateInfosInvoice.businessEntity">
-          <a-space :size="8">
+    <a-row type="flex">
+      <a-col flex="400px">
+        <a-form :style="{ width: '400px' }" :label-col="labelCol" :wrapper-col="wrapperCol">
+          <a-form-item label="Moneda" name="typeCurrency">
             <a-select
-              v-model:value="invoice.businessEntity"
-              show-search
-              placeholder="Buscar cliente"
+              ref="select"
+              size="small"
+              v-model:value="formInvoice.typeCurrency"
+              style="width: 250px"
+              :disabled="!isAdd || invoiceDetails.length > 0"
+            >
+              <a-select-option :value="ETypeCurrency.soles">SOLES</a-select-option>
+              <a-select-option :value="ETypeCurrency.dollar">DÓLARES</a-select-option>
+            </a-select>
+          </a-form-item>
+
+          <a-form-item label="Num">
+            <a-input
+              v-if="type === EType.quotation"
+              v-model:value="formInvoice.numberQuotation"
+              size="small"
+              type="number"
+              style="width: 250px"
+              disabled
+            />
+            <a-input
+              v-else-if="type === EType.sale"
+              v-model:value="formInvoice.numberSaleOrder"
+              size="small"
+              type="number"
+              style="width: 250px"
+              disabled
+            />
+            <a-input
+              v-else-if="type === EType.buy"
+              v-model:value="formInvoice.numberPurchaseOrder"
+              size="small"
+              type="number"
+              style="width: 250px"
+              disabled
+            />
+          </a-form-item>
+
+          <a-form-item ref="name" label="Fecha" name="dateVoucher">
+            <a-date-picker
+              v-model:value="formInvoice.dateVoucher"
+              format="DD/MM/YYYY"
+              size="small"
               :style="styleInput"
-              :default-active-first-option="false"
-              :filter-option="false"
-              :not-found-content="null"
-              :options="businessEntitiesSearchQuery"
-              :field-names="{
-                label: 'name',
-                value: 'name',
-              }"
-              @search="handleBusinessEntitySearch"
-              @change="handleBusinessEntityChange"
-              size="small"
-            ></a-select>
-            <a-button type="primary" @click="handleAddBusinessEntity" size="small"> + </a-button>
-          </a-space>
-        </a-form-item>
-        <a-form-item label="Contacto" v-bind="validateInfosInvoice.contact">
-          <a-space :size="8">
-            <a-select
-              v-model:value="invoice.contact"
-              show-search
-              placeholder="Buscar contacto"
-              style="width: 250px"
-              :default-active-first-option="false"
-              :filter-option="false"
-              :not-found-content="null"
-              :options="contactsSearchQuery"
-              :field-names="{
-                label: 'fullName',
-                value: 'id',
-              }"
-              @search="handleContactSearch"
-              @change="handleContactChange"
-              size="small"
-            ></a-select>
-            <a-button type="primary" @click="handleAddContact" size="small"> + </a-button>
-          </a-space>
-        </a-form-item>
-        <a-form-item label=" ">
-          <a-popconfirm title="Resetear?" @confirm="handleResetInvoice">
-            <a-button style="width: 250px" size="small" type="dashed">
+            />
+          </a-form-item>
+
+          <a-form-item
+            :label="formInvoice.type === EType.sale ? 'Cliente' : 'Proveedor'"
+            v-bind="validateInfosInvoice.businessEntity"
+          >
+            <a-space :size="8">
+              <a-select
+                v-model:value="formInvoice.businessEntity"
+                show-search
+                :placeholder="formInvoice.type === EType.sale ? 'Buscar cliente' : 'Buscar proveedor'"
+                :style="styleInput"
+                :default-active-first-option="false"
+                :filter-option="false"
+                :not-found-content="null"
+                :options="businessEntitiesSearchQuery"
+                :field-names="{
+                  label: 'name',
+                  value: 'name',
+                }"
+                @search="handleBusinessEntitySearch"
+                @change="handleBusinessEntityChange"
+                size="small"
+              ></a-select>
+              <a-button type="primary" @click="handleAddBusinessEntity" size="small"> + </a-button>
+            </a-space>
+          </a-form-item>
+
+          <a-form-item label="Contacto" v-bind="validateInfosInvoice.contact">
+            <a-space :size="8">
+              <a-select
+                v-model:value="formInvoice.contact"
+                show-search
+                placeholder="Buscar contacto"
+                style="width: 250px"
+                :default-active-first-option="false"
+                :filter-option="false"
+                :not-found-content="null"
+                :options="contactsSearchQuery"
+                :field-names="{
+                  label: 'fullName',
+                  value: 'id',
+                }"
+                @search="handleContactSearch"
+                @change="handleContactChange"
+                size="small"
+              ></a-select>
+              <a-button type="primary" @click="handleAddContact" size="small"> + </a-button>
+            </a-space>
+          </a-form-item>
+        </a-form>
+      </a-col>
+      <a-col flex="400px">
+        <a-form :style="{ width: '400px' }" :label-col="labelCol" :wrapper-col="wrapperCol">
+          <a-form-item label="Producto" v-bind="validateInfos.product">
+            <a-space :size="8">
+              <a-select
+                v-model:value="invoiceDetail.product"
+                show-search
+                placeholder="Buscar producto"
+                style="width: 250px"
+                :default-active-first-option="false"
+                :filter-option="false"
+                :not-found-content="null"
+                :options="productsSearchQuery"
+                :field-names="{
+                  label: 'name',
+                  value: 'name',
+                }"
+                @search="handleProductSearch"
+                @change="handleProductChange"
+                size="small"
+              ></a-select>
+              <a-button type="primary" @click="handleAddProduct" size="small"> + </a-button>
+            </a-space>
+          </a-form-item>
+
+          <a-form-item label="Cant" v-bind="validateInfos.quantity">
+            <a-input type="number" v-model:value="invoiceDetail.quantity" style="width: 250px" size="small" :min="1" />
+          </a-form-item>
+
+          <a-form-item label="Precio" v-bind="validateInfos.price">
+            <a-input type="number" v-model:value="invoiceDetail.price" style="width: 250px" size="small" />
+          </a-form-item>
+
+          <a-form-item label=" ">
+            <a-button type="primary" @click.prevent="handleAddInvoiceDetail" style="width: 250px" size="small">
               <template #icon>
-                <arrow-up-outlined></arrow-up-outlined>
+                <shopping-cart-outlined></shopping-cart-outlined>
               </template>
-              Resetear
+              Agregar
             </a-button>
-          </a-popconfirm>
-        </a-form-item>
-        <a-form-item label=" ">
-          <a-popconfirm title="Resetear todo?" @confirm="handleResetAll">
-            <a-button style="width: 250px" size="small" type="dashed" danger>
-              <template #icon>
-                <clear-outlined></clear-outlined>
-              </template>
-              Resetear todo
-            </a-button>
-          </a-popconfirm>
-        </a-form-item>
-      </a-form>
-
-      <a-form :style="{ width: '400px' }" :label-col="labelCol" :wrapper-col="wrapperCol">
-        <a-form-item label="Producto" v-bind="validateInfos.product">
-          <a-space :size="8">
-            <a-select
-              v-model:value="invoiceDetail.product"
-              show-search
-              placeholder="Buscar producto"
-              style="width: 250px"
-              :default-active-first-option="false"
-              :filter-option="false"
-              :not-found-content="null"
-              :options="productsSearchQuery"
-              :field-names="{
-                label: 'name',
-                value: 'name',
-              }"
-              @search="handleProductSearch"
-              @change="handleProductChange"
-              size="small"
-            ></a-select>
-            <a-button type="primary" @click="handleAddProduct" size="small"> + </a-button>
-          </a-space>
-        </a-form-item>
-
-        <a-form-item label="Cant" v-bind="validateInfos.quantity">
-          <a-input type="number" v-model:value="invoiceDetail.quantity" style="width: 250px" size="small" :min="1" />
-        </a-form-item>
-
-        <a-form-item label="Precio" v-bind="validateInfos.price">
-          <a-input type="number" v-model:value="invoiceDetail.price" style="width: 250px" size="small" />
-        </a-form-item>
-
-        <a-form-item label="Discount" v-bind="validateInfos.discount">
-          <a-input type="number" v-model:value="invoiceDetail.discount" style="width: 250px" size="small" />
-        </a-form-item>
-
-        <a-form-item label="Cant oferta" v-bind="validateInfos.quantityOffer">
-          <a-input type="number" v-model:value="invoiceDetail.quantityOffer" style="width: 250px" size="small" />
-        </a-form-item>
-
-        <a-form-item label=" ">
-          <a-button type="primary" @click.prevent="handleAddInvoiceDetail" style="width: 250px" size="small">
-            <template #icon>
-              <shopping-cart-outlined></shopping-cart-outlined>
-            </template>
-            Agregar
-          </a-button>
-        </a-form-item>
-      </a-form>
-    </a-space>
+          </a-form-item>
+        </a-form>
+      </a-col>
+    </a-row>
 
     <a-table
       class="ant-table-striped"
@@ -182,7 +203,7 @@
                 _.isNull(text) || text === ''
                   ? '-'
                   : column.dataIndex === 'price'
-                  ? currency(text, 'S/', 3)
+                  ? currency(text, preTypeCurrency, 3)
                   : column.dataIndex === 'discount'
                   ? `${text}%`
                   : text
@@ -193,7 +214,7 @@
 
         <template v-else-if="column.dataIndex === 'rode'">
           <span v-if="record.quantity !== '' && record.price !== ''">
-            {{ currency(calcRode(record.quantity, record.price, record.discount), 'S/', 3) }}
+            {{ currency(calcRode(record.quantity, record.price, record.discount), preTypeCurrency, 3) }}
           </span>
         </template>
 
@@ -250,18 +271,12 @@
 import useProducts from '@/catalog/composables/use-products'
 import useProductsNameSearch from '@/catalog/composables/use-products-name-search'
 import useinvoiceDetailVariables from '@/sale/composables/use-invoice-detail-variables'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import _ from 'lodash'
 import { Form, message } from 'ant-design-vue'
 import InvoiceDetail from '../models/invoice-detail'
-import { calcRode, currency, dateParse } from '@/shared/methods'
-import {
-  ShoppingCartOutlined,
-  SmileOutlined,
-  SyncOutlined,
-  ClearOutlined,
-  ArrowUpOutlined,
-} from '@ant-design/icons-vue'
+import { calcRode, currency } from '@/shared/methods'
+import { ShoppingCartOutlined, SyncOutlined } from '@ant-design/icons-vue'
 import useBusinessEntities from '../composables/use-business-entities'
 import useBusinessEntitiesNameSearch from '../composables/use-business-entites-name-search'
 import useContacts from '../composables/use-contacts'
@@ -273,7 +288,7 @@ import FormContactDrawer from '../components/form-contact-drawer.vue'
 import Product from '@/catalog/models/product'
 import FormProductDrawer from '@/catalog/components/form-product-drawer.vue'
 import { useInvoiceStore } from '@/stores/invoice-store'
-import { EType, EStatus } from '@/shared/enums'
+import { EType, ETypeCurrency, ETypeVoucher } from '@/shared/enums'
 
 const props = defineProps({
   show: Boolean,
@@ -291,7 +306,7 @@ const props = defineProps({
 const emit = defineEmits(['onClose'])
 
 // states
-const invoice = ref(props.invoice)
+const formInvoice = ref(props.invoice)
 const invoiceDetails = ref(props.invoice.invoiceDetails)
 const invoiceDetail = ref(new InvoiceDetail())
 const editableData = reactive({})
@@ -313,6 +328,8 @@ const useForm = Form.useForm
 const useInvoiceForm = Form.useForm
 
 // computeds
+const preTypeCurrency = computed(() => (formInvoice.value.typeCurrency === ETypeCurrency.soles ? 'S/' : '$'))
+
 const title = computed(() => {
   switch (props.type) {
     case EType.quotation:
@@ -343,13 +360,13 @@ const num = computed(() => {
   switch (props.type) {
     case EType.quotation:
       if (!props.isAdd) {
-        return _.cloneDeep(invoice.value.numberQuotation)
+        return _.cloneDeep(formInvoice.value.numberQuotation)
       } else {
         return '-'
       }
     case EType.sale:
       if (!props.isAdd) {
-        return _.cloneDeep(invoice.value.numberInvoice)
+        return _.cloneDeep(formInvoice.value.numberInvoice)
       } else {
         return '-'
       }
@@ -366,11 +383,15 @@ const {
   resetFields: resetFieldsInvoice,
   validate: validateInvoice,
   validateInfos: validateInfosInvoice,
-} = useInvoiceForm(invoice, rulesInvoice)
+} = useInvoiceForm(formInvoice, rulesInvoice)
 
 // products select--------------------------------------------
 const { products } = useProducts()
-const { searchQuery: productsSearch, repositoriesSearchQuery: productsSearchQuery } = useProductsNameSearch(products)
+const { searchQuery: productsSearch, repositoriesSearchQuery } = useProductsNameSearch(products)
+
+const productsSearchQuery = computed(() => {
+  return repositoriesSearchQuery.value.filter(repository => repository.typeCurrency === formInvoice.value.typeCurrency)
+})
 
 const handleProductSearch = val => {
   productsSearch.value = val
@@ -379,7 +400,9 @@ const handleProductSearch = val => {
 const handleProductChange = (name, close = true) => {
   productsSearch.value = name
   invoiceDetail.value.product = name
-  invoiceDetail.value.price = _.cloneDeep(products.value.filter(item => item.name === name)[0]).price
+  if (props.type === EType.sale || props.type === EType.quotation) {
+    invoiceDetail.value.price = _.cloneDeep(products.value.filter(item => item.name === name)[0]).price
+  }
   if (!close) showDrawerProduct.value = close
 }
 
@@ -400,7 +423,7 @@ const handleBusinessEntitySearch = val => {
 
 const handleBusinessEntityChange = (name, close = true) => {
   businessEntitiesSearch.value = name
-  invoice.value.businessEntity = name
+  formInvoice.value.businessEntity = name
   if (!close) showDrawerBusinessEntity.value = close
 }
 
@@ -420,7 +443,7 @@ const handleContactSearch = val => {
 
 const handleContactChange = (id, close = true) => {
   contactsSearch.value = _.cloneDeep(contacts.value.filter(item => item.id === id)[0]).fullName
-  invoice.value.contact = id
+  formInvoice.value.contact = id
   if (!close) showDrawerContact.value = close
 }
 
@@ -481,9 +504,11 @@ const handleOkInvoice = () => {
   if (invoiceDetails.value.length > 0) {
     validateInvoice()
       .then(() => {
-        let objInvoice = _.cloneDeep(invoice.value)
-        objInvoice.businessEntity = businessEntities.value.filter(item => item.name === invoice.value.businessEntity)[0]
-        objInvoice.contact = contacts.value.filter(item => item.id === invoice.value.contact)[0]
+        let objInvoice = _.cloneDeep(formInvoice.value)
+        objInvoice.businessEntity = businessEntities.value.filter(
+          item => item.name === formInvoice.value.businessEntity
+        )[0]
+        objInvoice.contact = contacts.value.filter(item => item.id === formInvoice.value.contact)[0]
         objInvoice.invoiceDetails = invoiceDetails.value
 
         isDisable.value = true
@@ -549,9 +574,15 @@ const handleOkInvoice = () => {
   }
 }
 
+const handleChangeSelectedVoucher = val => {
+  formInvoice.value.numberInvoice = null
+  formInvoice.value.numberBill = null
+  formInvoice.value.numberProforma = null
+}
+
 const handleResetInvoice = () => {
-  invoice.value.businessEntity = null
-  invoice.value.contact = null
+  formInvoice.value.businessEntity = null
+  formInvoice.value.contact = null
   businessEntitiesSearch.value = ''
   contactsSearch.value = ''
 }

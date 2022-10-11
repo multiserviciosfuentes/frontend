@@ -1,7 +1,26 @@
 <template>
   <div>
-    <a-typography-title :level="3">PRODUCTOS</a-typography-title>
+    <!-- <a-typography-title :level="3">PRODUCTOS</a-typography-title> -->
     <!--    table product-->
+
+    <a-page-header style="border: 1px solid rgb(235, 237, 240)" title="PRODUCTOS">
+      <template #extra v-if="user.roles.some(role => role === (ERole.admin || ERole.moderator))">
+        <a-row type="flex">
+          <a-statistic title="Monto" value="Total" />
+          <a-statistic
+            title="PEN"
+            prefix="S/"
+            :value-style="{ color: '#3f8600' }"
+            :value="currency(rodeSolesMovements, '', 3)"
+            :style="{
+              margin: '0 32px',
+            }"
+          />
+          <a-statistic title="USD" prefix="$" :value="currency(rodeDollarMovements, '', 3)" />
+        </a-row>
+      </template>
+    </a-page-header>
+
     <a-table
       class="ant-table-striped"
       :row-class-name="(_record, index) => (index % 2 === 1 ? 'table-striped' : null)"
@@ -9,7 +28,7 @@
       :columns="columnsProduct"
       :data-source="repositoriesSearchQuery"
       :pagination="false"
-      :scroll="{ x: 1000, y: 'calc( 100vh - 64px - 40px - 49px - 39px - 40px)' }"
+      :scroll="{ x: 1000, y: 'calc( 100vh - 220px)' }"
       :loading="loadingProducts"
       size="small"
       bordered
@@ -37,6 +56,22 @@
                 />
               </a-input-group>
             </a-space>
+
+            <!-- <a-space :size="20" :style="{ float: 'right' }">
+              <a-button type="primary" ghost @click="onClick('PurchaseOrder')">
+                <template #icon>
+                  <plus-outlined></plus-outlined>
+                </template>
+                Entrada
+              </a-button>
+
+              <a-button type="primary" ghost danger @click="onClick('SaleOrder')">
+                <template #icon>
+                  <minus-outlined></minus-outlined>
+                </template>
+                Salida
+              </a-button>
+            </a-space> -->
           </a-col>
         </a-row>
       </template>
@@ -46,14 +81,6 @@
           <span>
             {{ (index += 1) }}
           </span>
-        </template>
-
-        <template v-else-if="column.dataIndex === 'stock'">
-          <a @click="handleMovements(record.id)">
-            <a-tag :color="stockByProductId(record.id) <= 100 ? 'red' : 'green'">
-              {{ stockByProductId(record.id) }}</a-tag
-            >
-          </a>
         </template>
 
         <template v-else-if="column.dataIndex === 'unitOfMeasurement'">
@@ -75,17 +102,11 @@
         <template v-else-if="column.key === 'action'">
           <div class="editable-row-operations">
             <span>
-              <a @click="handleEditProduct(record.id)">Editar</a>
-              <a-divider type="vertical" />
-              <!-- <a-popconfirm title="Eliminar？" @confirm="handleRemoveProduct(record.id)">
-                <template #icon><question-circle-outlined style="color: red" /></template>
-                <a>Eliminar</a>
-              </a-popconfirm> -->
-
               <a-dropdown>
                 <template #overlay>
                   <a-menu>
                     <a-menu-item @click="handleFormDirect(record)">Agregar o quitar</a-menu-item>
+                    <a-menu-item @click="handleEditProduct(record.id)">Editar</a-menu-item>
                     <a-menu-item @click="handleRemoveProduct(record.id)">Eliminar</a-menu-item>
                   </a-menu>
                 </template>
@@ -100,10 +121,55 @@
 
         <template v-else-if="column.dataIndex === 'price'">
           <span>
-            {{ currency(text, 'S/', 3) }}
+            {{ currency(text, record.typeCurrency === ETypeCurrency.soles ? 'S/' : '$', 3) }}
+          </span>
+        </template>
+
+        <template v-else-if="column.dataIndex === 'stock'">
+          <a @click="handleMovements(record.id)">
+            <a-tag :color="stockByProductId(record.id) <= 100 ? 'red' : 'green'">
+              {{ stockByProductId(record.id) }}</a-tag
+            >
+          </a>
+        </template>
+
+        <template v-else-if="column.dataIndex === 'rodeSoles'">
+          <span>
+            {{
+              record.typeCurrency === ETypeCurrency.soles
+                ? currency(record.price * stockByProductId(record.id), '', 3)
+                : '-'
+            }}
+          </span>
+        </template>
+
+        <template v-else-if="column.dataIndex === 'rodeDollar'">
+          <span>
+            {{
+              record.typeCurrency === ETypeCurrency.dollar
+                ? currency(record.price * stockByProductId(record.id), '', 3)
+                : '-'
+            }}
           </span>
         </template>
       </template>
+
+      <!-- <template #summary>
+        <a-table-summary fixed>
+          <a-table-summary-row :style="{ background: '#CAE6FF' }">
+            <a-table-summary-cell :col-span="5"></a-table-summary-cell>
+
+            <a-table-summary-cell :style="{ textAlign: 'right', fontWeight: 'bold' }">Total</a-table-summary-cell>
+            <a-table-summary-cell :style="{ textAlign: 'right', fontWeight: 'bold' }">{{
+              currency(rodeSolesMovements, 'S/', 3)
+            }}</a-table-summary-cell>
+            <a-table-summary-cell :style="{ textAlign: 'right', fontWeight: 'bold' }">{{
+              currency(rodeDollarMovements, '$', 3)
+            }}</a-table-summary-cell>
+            <a-table-summary-cell></a-table-summary-cell>
+          </a-table-summary-row>
+        </a-table-summary>
+      </template> -->
     </a-table>
 
     <template v-if="showMovements">
@@ -135,7 +201,7 @@ import Product from '../models/product'
 import { currency } from '@/shared/methods'
 import _ from 'lodash'
 import { useProductStore } from '@/stores/product-store'
-import { PlusOutlined, QuestionCircleOutlined, DownOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, MinusOutlined, DownOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue'
 import { message, Modal } from 'ant-design-vue'
 import FormDirect from '@/inventory/components/form-direct.vue'
 
@@ -144,10 +210,16 @@ import { useMovementStore } from '@/stores/movement-store'
 import MovementsModal from '@/inventory/components/movements-modal.vue'
 import useMovements from '@/inventory/composables/use-movements'
 import useMovementsByProduct from '@/inventory/composables/use-movements-by-product'
+import { ERole, ETypeCurrency } from '@/shared/enums'
+import { useAuthUserStore } from '@/stores/auth-user-store'
+import { useRoute, useRouter } from 'vue-router'
 
 // stores
+const authUserStore = useAuthUserStore()
 const productStore = useProductStore()
 const movementStore = useMovementStore()
+const router = useRouter()
+const route = useRoute()
 
 // states
 const showDrawerProduct = ref(false)
@@ -162,6 +234,7 @@ const { columnsProduct, handleChangeProduct } = useActionsProduct(products)
 // computeds
 const loadingProducts = computed(() => productStore.loading)
 const loading = ref(false)
+const user = computed(() => authUserStore.userCurrent)
 
 // functions
 const handleAddProduct = () => {
@@ -206,8 +279,12 @@ const handleRemoveProduct = productId => {
   })
 }
 
+const onClick = name => {
+  router.push({ name: name })
+}
+
 const { repositories: movements } = useMovements()
-const { stockByProductId } = useMovementsByProduct(movements)
+const { stockByProductId, rodeSolesMovements, rodeDollarMovements } = useMovementsByProduct(movements)
 const showMovements = ref(false)
 const handleMovements = productId => {
   showMovements.value = true

@@ -44,6 +44,8 @@ export const useInvoiceStore = defineStore('invoice', () => {
     return InvoiceService.create(invoice)
       .then(response => {
         all.value.push(response.data)
+        let movementStore = useMovementStore()
+        movementStore.getAll()
         return Promise.resolve(response.data)
       })
       .catch(e => {
@@ -84,6 +86,8 @@ export const useInvoiceStore = defineStore('invoice', () => {
         if (index !== -1) {
           all.value.splice(index, 1)
         }
+        let movementStore = useMovementStore()
+        movementStore.getAll()
         return Promise.resolve(response)
       })
       .catch(e => {

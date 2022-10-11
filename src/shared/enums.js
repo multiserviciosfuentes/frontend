@@ -33,3 +33,17 @@ export const ESearch = {
   businessEntity: 'businessEntity',
   code: 'code',
 }
+
+export const ETypeFilter = {
+  all: 'all',
+  day: 'day',
+  week: 'week',
+  month: 'month',
+  year: 'year',
+  interval: 'interval',
+}
+
+export const ETypeCurrency = {
+  soles: 'TYPE_SOLES',
+  dollar: 'TYPE_DOLLAR',
+}

@@ -5,7 +5,6 @@ import { useInvoiceStore } from '@/stores/invoice-store'
 import { useMovementStore } from '@/stores/movement-store'
 import { useProductStore } from '@/stores/product-store'
 import { useUnitOfMeasurementStore } from '@/stores/unit-of-measurement-store'
-import { useUserStore } from '@/stores/user-store'
 import { computed } from 'vue'
 
 export default function useLogin() {
@@ -14,7 +13,6 @@ export default function useLogin() {
   const unitOfMeasurementStore = useUnitOfMeasurementStore()
   const businessEntityStore = useBusinessEntityStore()
   const contactStore = useContactStore()
-  const userStore = useUserStore()
   const invoiceStore = useInvoiceStore()
   const movementStore = useMovementStore()
 

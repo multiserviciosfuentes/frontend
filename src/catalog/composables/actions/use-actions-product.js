@@ -23,7 +23,7 @@ export default function useActionsProduct(products) {
         title: 'COD',
         dataIndex: 'code',
         key: 'code',
-        width: '120px',
+        width: '110px',
       },
       {
         title: 'NOMBRE',
@@ -38,10 +38,10 @@ export default function useActionsProduct(products) {
         title: 'UM',
         dataIndex: 'unitOfMeasurement',
         key: 'unitOfMeasurement',
-        width: '150px',
+        width: '120px',
       },
       {
-        title: 'PRECIO',
+        title: 'VALOR V.',
         dataIndex: 'price',
         key: 'price',
         width: '120px',
@@ -50,14 +50,26 @@ export default function useActionsProduct(products) {
       {
         title: 'STOCK',
         dataIndex: 'stock',
-        width: '120px',
+        width: '110px',
         className: 'column-center',
       },
       {
-        title: 'ACCIONES',
+        title: 'MONTO S/',
+        dataIndex: 'rodeSoles',
+        width: '140px',
+        className: 'column-right',
+      },
+      {
+        title: 'MONTO $',
+        dataIndex: 'rodeDollar',
+        width: '140px',
+        className: 'column-right',
+      },
+      {
+        title: '',
         dataIndex: 'action',
         key: 'action',
-        width: '150px',
+        width: '70px',
         className: 'column-center',
       },
     ]

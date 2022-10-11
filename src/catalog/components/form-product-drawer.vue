@@ -10,53 +10,67 @@
       @close="$emit('onClose')"
       :maskClosable="false"
     >
-      <a-form layout="vertical" ref="formRef" :model="productForm" :rules="rules">
+      <a-form ref="formRef" :model="formProduct" :rules="rules" v-bind="formItemLayout">
         <a-row :gutter="16">
           <a-col :span="24">
             <a-form-item has-feedback label="Código" name="code">
-              <a-input v-model:value="productForm.code" placeholder="Insertar código" />
+              <a-input v-model:value="formProduct.code" placeholder="Ingresar código" />
             </a-form-item>
           </a-col>
           <a-col :span="24">
             <a-form-item has-feedback label="Nombre" name="name">
-              <a-input v-model:value="productForm.name" placeholder="Insertar nombre" />
+              <a-input v-model:value="formProduct.name" placeholder="Ingresar nombre" />
             </a-form-item>
           </a-col>
           <a-col :span="24">
-            <a-form-item has-feedback label="Unidad de medida" name="unitOfMeasurement">
-              <a-space :size="8">
-                <a-select
-                  v-model:value="productForm.unitOfMeasurement"
-                  show-search
-                  :style="{ width: '250px' }"
-                  placeholder="Buscar unidad de medida"
-                  :default-active-first-option="false"
-                  :filter-option="false"
-                  :not-found-content="null"
-                  :options="repositoriesSearchQuery"
-                  :field-names="{
-                    label: 'name',
-                    value: 'name',
-                  }"
-                  @search="handleUnitOfMeasurementSearch"
-                  @change="handleUnitOfMeasurementChange"
-                ></a-select>
-                <a-button type="primary" @click="showModelAddUM = true"> + </a-button>
-              </a-space>
+            <a-form-item label="Unidad de medida" name="unitOfMeasurement">
+              <a-select
+                v-model:value="formProduct.unitOfMeasurement"
+                show-search
+                :style="{ width: 'calc(100% - 41.58px)' }"
+                placeholder="Buscar unidad de medida"
+                :default-active-first-option="false"
+                :filter-option="false"
+                :not-found-content="null"
+                :options="repositoriesSearchQuery"
+                :field-names="{
+                  label: 'name',
+                  value: 'name',
+                }"
+                @search="handleUnitOfMeasurementSearch"
+                @change="handleUnitOfMeasurementChange"
+              ></a-select>
+              <a-button type="primary" @click="showModelAddUM = true"> + </a-button>
             </a-form-item>
           </a-col>
+
           <a-col :span="24">
-            <a-form-item label="Precio" name="price">
-              <a-input type="number" :maxlength="9" v-model:value="productForm.price" placeholder="Insertar precio" />
+            <a-form-item label="Valor V." name="price">
+              <a-input type="number" v-model:value="formProduct.price" placeholder="Ingresar valor de venta" />
+            </a-form-item>
+          </a-col>
+
+          <!-- <a-col :span="24">
+            <a-form-item label="Precio V." name="price">
+              <a-input type="number" v-model:value="formProduct.priceSale" placeholder="Ingresar precio de venta" />
+            </a-form-item>
+          </a-col> -->
+
+          <a-col :span="24">
+            <a-form-item label="Moneda" name="typeCurrency">
+              <a-radio-group v-model:value="formProduct.typeCurrency">
+                <a-radio :value="ETypeCurrency.soles">SOLES</a-radio>
+                <a-radio :value="ETypeCurrency.dollar">DÓLARES</a-radio>
+              </a-radio-group>
             </a-form-item>
           </a-col>
 
           <a-col :span="24">
             <a-form-item
-              v-for="(nickname, index) in productForm.nicknames"
+              v-for="(nickname, index) in formProduct.nicknames"
               :key="nickname.key"
               v-bind="index === 0 ? formItemLayout : {}"
-              :label="index === 0 ? 'Alias' : ''"
+              label="Alias"
               :name="['nicknames', index, 'name']"
               :rules="{
                 required: true,
@@ -66,11 +80,11 @@
             >
               <a-input
                 v-model:value="nickname.name"
-                placeholder="Insertar alias"
+                placeholder="Ingresar alias"
                 :style="{ width: '60%', marginRight: '8px' }"
               />
               <MinusCircleOutlined
-                v-if="productForm.nicknames.length > 0"
+                v-if="formProduct.nicknames.length > 0"
                 class="dynamic-delete-button"
                 @click="removeNickname(nickname)"
               />
@@ -88,7 +102,7 @@
       <template #extra>
         <a-space>
           <a-button @click="$emit('onClose')">Cancel</a-button>
-          <a-button type="primary" @click="onSave" :loading="loading">Aceptar</a-button>
+          <a-button type="primary" @click="onSave" :loading="loading">{{ isAdd ? 'Agregar' : 'Editar' }}</a-button>
         </a-space>
       </template>
     </a-drawer>
@@ -104,16 +118,15 @@
 </template>
 
 <script setup>
-import { onUnmounted, reactive, ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useProductStore } from '@/stores/product-store'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons-vue'
-import { Form } from 'ant-design-vue'
-import Product from '../models/product'
 import useUnitOfMeasurement from '../composables/unit-of-measurements'
 import useUnitOfMeasurementSearch from '../composables/unit-of-measurements-search'
 import FormUnitOfMeasurement from './form-unit-of-measurement.vue'
 import _ from 'lodash'
+import { ETypeCurrency } from '@/shared/enums'
 
 const props = defineProps({
   show: Boolean,
@@ -137,15 +150,14 @@ const handleUnitOfMeasurementSearch = val => {
 
 const handleUnitOfMeasurementChange = name => {
   searchQuery.value = name
-  productForm.value.unitOfMeasurement = name
+  formProduct.value.unitOfMeasurement = name
 }
 
 // stores
 const productStore = useProductStore()
-const useForm = Form.useForm
 
 // states
-const productForm = ref(props.product)
+const formProduct = ref(props.product)
 
 const formRef = ref()
 // rules
@@ -176,7 +188,7 @@ const onSave = () => {
   formRef.value
     .validate()
     .then(() => {
-      let objProduct = _.cloneDeep(productForm.value)
+      let objProduct = _.cloneDeep(formProduct.value)
       objProduct.unitOfMeasurement = repositories.value.filter(x => x.name === objProduct.unitOfMeasurement)[0]
       loading.value = true
       if (props.isAdd) {
@@ -215,15 +227,15 @@ const onSave = () => {
 }
 
 const removeNickname = item => {
-  let index = productForm.value.nicknames.indexOf(item)
+  let index = formProduct.value.nicknames.indexOf(item)
 
   if (index !== -1) {
-    productForm.value.nicknames.splice(index, 1)
+    formProduct.value.nicknames.splice(index, 1)
   }
 }
 
 const addNickname = () => {
-  productForm.value.nicknames.push({
+  formProduct.value.nicknames.push({
     name: '',
     key: Date.now(),
   })
@@ -238,11 +250,11 @@ const formItemLayoutWithOutLabel = {
   wrapperCol: {
     xs: {
       span: 24,
-      offset: 0,
+      offset: 5,
     },
     sm: {
       span: 24,
-      offset: 4,
+      offset: 5,
     },
   },
 }
@@ -253,7 +265,7 @@ const formItemLayout = {
       span: 24,
     },
     sm: {
-      span: 4,
+      span: 5,
     },
   },
   wrapperCol: {

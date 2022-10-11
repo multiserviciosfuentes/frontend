@@ -19,6 +19,8 @@ class InvoiceService {
       status: invoice.status,
       type: invoice.type,
       typeVoucher: invoice.typeVoucher,
+      typeCurrency: invoice.typeCurrency,
+      igv: invoice.igv,
       businessEntity: invoice.businessEntity,
       contact: invoice.contact,
       movement: invoice.movement,
@@ -39,8 +41,10 @@ class InvoiceService {
       numberProforma: invoice.numberProforma,
       numberPurchaseOrder: invoice.numberPurchaseOrder,
       status: invoice.status,
-      typeVoucher: invoice.typeVoucher,
       type: invoice.type,
+      typeVoucher: invoice.typeVoucher,
+      typeCurrency: invoice.typeCurrency,
+      igv: invoice.igv,
       businessEntity: invoice.businessEntity,
       contact: invoice.contact,
       movement: invoice.movement,
@@ -57,6 +61,7 @@ class InvoiceService {
       numberBill: invoice.numberBill,
       numberProforma: invoice.numberProforma,
       movement: invoice.movement,
+      igv: invoice.igv,
     })
   }
 }

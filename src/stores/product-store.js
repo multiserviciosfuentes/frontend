@@ -1,15 +1,12 @@
 import ProductService from '@/catalog/services/product-service'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useMovementStore } from './movement-store'
 
 export const useProductStore = defineStore('product', () => {
   const all = ref([])
   const loading = ref(false)
   const movements = ref([])
-
-  // const stockByProductId = (productId) => {
-  //   return movements.value.filter( movement => )
-  // }
 
   const getAll = () => {
     loading.value = true
@@ -45,6 +42,8 @@ export const useProductStore = defineStore('product', () => {
     return ProductService.create(product)
       .then(response => {
         all.value.push(response.data)
+        let movementStore = useMovementStore()
+        movementStore.getAll()
         return Promise.resolve(response.data)
       })
       .catch(e => {
@@ -56,6 +55,8 @@ export const useProductStore = defineStore('product', () => {
     return ProductService.update(payload.id, payload)
       .then(response => {
         Object.assign(all.value.filter(item => payload.id === item.id)[0], response.data)
+        let movementStore = useMovementStore()
+        movementStore.getAll()
         return Promise.resolve(response.data)
       })
       .catch(e => {
@@ -70,6 +71,8 @@ export const useProductStore = defineStore('product', () => {
         if (index !== -1) {
           all.value.splice(index, 1)
         }
+        let movementStore = useMovementStore()
+        movementStore.getAll()
         return Promise.resolve(response)
       })
       .catch(e => {

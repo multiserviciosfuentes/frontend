@@ -13,29 +13,191 @@ const columnsSale = [
     width: '90px',
   },
   {
-    title: 'TIPO',
-    dataIndex: 'typeVoucher',
-    width: '140px',
-  },
-  {
     title: 'NUM',
-    dataIndex: 'number',
+    dataIndex: 'numberSaleOrder',
     className: 'column-center',
     width: '70px',
   },
+  // {
+  //   title: 'TIPO',
+  //   dataIndex: 'typeVoucher',
+  //   width: '140px',
+  // },
   {
     title: 'CLIENTE',
     dataIndex: 'businessEntity',
   },
   {
+    title: 'SUB TOTAL',
+    dataIndex: 'subtotal',
+    className: 'column-right',
+    width: '130px',
+  },
+  {
     title: 'TOTAL',
     dataIndex: 'total',
     className: 'column-right',
-    width: '180px',
+    width: '130px',
+  },
+  {
+    title: '',
+    key: 'operationBuy',
+    className: 'column-center',
+    width: '70px',
+  },
+]
+
+const columnsBuy = [
+  {
+    title: 'ITEM',
+    key: 'index',
+    className: 'column-center',
+    width: '50px',
+  },
+  {
+    title: 'FECHA',
+    dataIndex: 'dateVoucher',
+    width: '90px',
+  },
+  {
+    title: 'NUM',
+    dataIndex: 'numberPurchaseOrder',
+    className: 'column-center',
+    width: '70px',
+  },
+  // {
+  //   title: 'TIPO',
+  //   dataIndex: 'typeVoucher',
+  //   width: '140px',
+  // },
+  {
+    title: 'PROVEEDOR',
+    dataIndex: 'businessEntity',
+  },
+  {
+    title: 'SUB TOTAL',
+    dataIndex: 'subtotal',
+    className: 'column-right',
+    width: '130px',
+  },
+  {
+    title: 'TOTAL',
+    dataIndex: 'total',
+    className: 'column-right',
+    width: '130px',
+  },
+  {
+    title: '',
+    key: 'operationBuy',
+    className: 'column-center',
+    width: '70px',
+  },
+]
+
+
+const columnsQuotation = [
+  {
+    title: 'ITEM',
+    key: 'index',
+    className: 'column-center',
+    width: '50px',
+  },
+  {
+    title: 'FECHA',
+    dataIndex: 'dateVoucher',
+    width: '90px',
+  },
+  {
+    title: 'NUM',
+    dataIndex: 'numberQuotation',
+    className: 'column-center',
+    width: '70px',
+    defaultSortOrder: 'ascend',
+    sorter: (a, b) => a.numberQuotation - b.numberQuotation,
+  },
+  {
+    title: 'VENDEDOR',
+    dataIndex: 'seller',
+    onFilter: (value, record) => record.indexOf(value) === 0,
+    sorter: (a, b) => a.length - b.length,
+  },
+  {
+    title: 'CLIENTE',
+    dataIndex: 'businessEntity',
+    onFilter: (value, record) => record.businessEntity.name.indexOf(value) === 0,
+    sorter: (a, b) => a.businessEntity.name.length - b.businessEntity.name.length,
+  },
+  {
+    title: 'ESTADO',
+    dataIndex: 'status',
+    width: '120px',
+  },
+  {
+    title: 'SUB TOTAL',
+    dataIndex: 'subtotal',
+    className: 'column-right',
+    width: '150px',
+  },
+  {
+    title: 'TOTAL',
+    dataIndex: 'total',
+    className: 'column-right',
+    width: '150px',
   },
   {
     title: 'ACCIÓN',
-    key: 'operationSale',
+    key: 'operation',
+    className: 'column-center',
+    width: '120px',
+  },
+]
+
+const columnsQuotationUser = [
+  {
+    title: 'ITEM',
+    key: 'index',
+    className: 'column-center',
+    width: '50px',
+  },
+  {
+    title: 'FECHA',
+    dataIndex: 'dateVoucher',
+    width: '90px',
+  },
+  {
+    title: 'NUM',
+    dataIndex: 'numberQuotation',
+    className: 'column-center',
+    width: '70px',
+    defaultSortOrder: 'ascend',
+    sorter: (a, b) => a.numberQuotation - b.numberQuotation,
+  },
+  {
+    title: 'CLIENTE',
+    dataIndex: 'businessEntity',
+    onFilter: (value, record) => record.businessEntity.name.indexOf(value) === 0,
+    sorter: (a, b) => a.businessEntity.name.length - b.businessEntity.name.length,
+  },
+  {
+    title: 'ESTADO',
+    dataIndex: 'status',
+    width: '120px',
+  },
+  {
+    title: 'SUB TOTAL',
+    dataIndex: 'subtotal',
+    className: 'column-right',
+    width: '130px',
+  },
+  {
+    title: 'TOTAL',
+    dataIndex: 'total',
+    className: 'column-right',
+    width: '130px',
+  },
+  {
+    title: 'ACCIÓN',
+    key: 'operation',
     className: 'column-center',
     width: '120px',
   },
@@ -81,102 +243,6 @@ const innerColumns = [
     key: 'action',
     width: '150px',
     className: 'column-center',
-  },
-]
-
-const columnsQuotation = [
-  {
-    title: 'ITEM',
-    key: 'index',
-    className: 'column-center',
-    width: '50px',
-  },
-  {
-    title: 'FECHA',
-    dataIndex: 'dateVoucher',
-    width: '90px',
-  },
-  {
-    title: 'NUM',
-    dataIndex: 'numberQuotation',
-    className: 'column-center',
-    width: '70px',
-    defaultSortOrder: 'ascend',
-    sorter: (a, b) => a.numberQuotation - b.numberQuotation,
-  },
-  {
-    title: 'VENDEDOR',
-    dataIndex: 'seller',
-    onFilter: (value, record) => record.indexOf(value) === 0,
-    sorter: (a, b) => a.length - b.length,
-  },
-  {
-    title: 'CLIENTE',
-    dataIndex: 'businessEntity',
-    onFilter: (value, record) => record.businessEntity.name.indexOf(value) === 0,
-    sorter: (a, b) => a.businessEntity.name.length - b.businessEntity.name.length,
-  },
-  {
-    title: 'ESTADO',
-    dataIndex: 'status',
-    width: '120px',
-  },
-  {
-    title: 'TOTAL',
-    dataIndex: 'total',
-    className: 'column-right',
-    width: '160px',
-  },
-  {
-    title: 'ACCIÓN',
-    key: 'operation',
-    className: 'column-center',
-    width: '120px',
-  },
-]
-
-const columnsQuotationUser = [
-  {
-    title: 'ITEM',
-    key: 'index',
-    className: 'column-center',
-    width: '50px',
-  },
-  {
-    title: 'FECHA',
-    dataIndex: 'dateVoucher',
-    width: '90px',
-  },
-  {
-    title: 'NUM',
-    dataIndex: 'numberQuotation',
-    className: 'column-center',
-    width: '70px',
-    defaultSortOrder: 'ascend',
-    sorter: (a, b) => a.numberQuotation - b.numberQuotation,
-  },
-  {
-    title: 'CLIENTE',
-    dataIndex: 'businessEntity',
-    onFilter: (value, record) => record.businessEntity.name.indexOf(value) === 0,
-    sorter: (a, b) => a.businessEntity.name.length - b.businessEntity.name.length,
-  },
-  {
-    title: 'ESTADO',
-    dataIndex: 'status',
-    width: '120px',
-  },
-  {
-    title: 'TOTAL',
-    dataIndex: 'total',
-    className: 'column-right',
-    width: '160px',
-  },
-  {
-    title: 'ACCIÓN',
-    key: 'operation',
-    className: 'column-center',
-    width: '120px',
   },
 ]
 
@@ -249,9 +315,11 @@ export default function useInvoicesVariables() {
 
   return {
     columnsSale,
-    innerColumns,
+    columnsBuy,
     columnsQuotation,
     columnsQuotationUser,
+    innerColumns,
+
     handleChangeInvoice,
   }
 }

@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { ETypeCurrency } from '../enums'
 
 function Unidades(num) {
   switch (num) {
@@ -149,7 +150,7 @@ function Millones(num) {
   return strMillones + ' ' + strMiles
 } //Millones()
 
-export function numeroALetras(num) {
+export function numeroALetras(num, typeCurrency) {
   var data = {
     numero: num,
     enteros: Math.floor(num),
@@ -158,10 +159,10 @@ export function numeroALetras(num) {
     letrasMonedaPlural: '', //'PESOS', 'Dólares', 'Bolívares', 'etcs'
     letrasMonedaSingular: '', //'PESO', 'Dólar', 'Bolivar', 'etc'
 
-    letrasMonedaCentavoPlural: 'SOLES',
-    letrasMonedaCentavoSingular: 'SOLES',
+    letrasMonedaCentavoPlural: typeCurrency === ETypeCurrency.soles ? 'SOLES' : 'DÓLARES',
+    letrasMonedaCentavoSingular: typeCurrency === ETypeCurrency.soles ? 'SOLES' : 'DÓLARES',
   }
-  data.letrasCentavos = _.padStart(`${data.centavos}`, 2, '0') + '/100 SOLES'
+  data.letrasCentavos = _.padStart(`${data.centavos}`, 2, '0') + `/100 ${typeCurrency === ETypeCurrency.soles ? 'SOLES' : 'DÓLARES'}`
 
   if (data.enteros == 0) return 'CERO' + ' ' + data.letrasCentavos
   if (data.enteros == 1) return Millones(data.enteros) + ' ' + data.letrasCentavos

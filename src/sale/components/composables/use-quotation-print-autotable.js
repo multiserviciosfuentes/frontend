@@ -6,15 +6,18 @@ import { numeroALetras } from '@/shared/utils/numero-a-letras'
 import _, { range } from 'lodash'
 import dayjs from 'dayjs'
 import { es } from 'dayjs/locale/es'
-import Logo from '@/assets/images/local/fuentes.jpeg'
+import Logo from '@/assets/images/local/fuentes2.jpeg'
 import LogoBcp from '@/assets/images/local/logobcp.jpg'
 import LogoBvva from '@/assets/images/local/logobbva.png'
+import { ETypeCurrency } from '@/shared/enums'
 
 dayjs.locale('es')
 
 export default function useQuotationPrint() {
   const onPrint = ({ igv, wayToPay, place, availability, quotation, user, validity }) => {
     const doc = new jsPDF()
+
+    let preTypeCurrency = ETypeCurrency.soles === quotation.typeCurrency ? 'S/' : '$'
 
     let result = Array.from(quotation.invoiceDetails, (item, index) => [
       index + 1,
@@ -138,7 +141,7 @@ export default function useQuotationPrint() {
             },
           },
           {
-            content: `Lima, ${_.padStart(currentDate.day(), 2, '0')} de ${_.capitalize(
+            content: `Lima, ${_.padStart(currentDate.date(), 2, '0')} de ${_.capitalize(
               dayjs.months().at(currentDate.month() - 1)
             )} de ${currentDate.year()}`,
             styles: {
@@ -230,7 +233,14 @@ export default function useQuotationPrint() {
     })
 
     autoTable(doc, {
-      columns: ['ITEM', 'DESCRIPCIÓN', 'CANT.', 'UNIDAD MEDIDA', 'MONTO UNIT. (S/.)', ' TOTAL (S/.)'],
+      columns: [
+        'ITEM',
+        'DESCRIPCIÓN',
+        'CANT.',
+        'UNIDAD MEDIDA',
+        `MONTO UNIT. (${preTypeCurrency})`,
+        `TOTAL (${preTypeCurrency})`,
+      ],
       columnStyles: {
         0: { halign: 'center', cellWidth: 10 },
         1: {},
@@ -256,9 +266,9 @@ export default function useQuotationPrint() {
         textColor: '#252525',
       },
       body: result,
-      foot: [['', '', '', '', 'Sub Total', `${currency(quotation.total, 'S/', 2)}`]],
+      foot: [['', '', '', '', 'Sub Total', `${currency(quotation.total, preTypeCurrency, 2)}`]],
 
-      margin: { top: 40},
+      margin: { top: 40 },
 
       theme: 'grid',
     })
@@ -266,7 +276,7 @@ export default function useQuotationPrint() {
     autoTable(doc, {
       body: [
         {
-          content: `SON: ${numeroALetras(quotation.total)}`,
+          content: `SON: ${numeroALetras(quotation.total, quotation.typeCurrency)}`,
         },
       ],
 

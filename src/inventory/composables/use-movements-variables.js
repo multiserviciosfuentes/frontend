@@ -10,13 +10,15 @@ const columnsMovements = [
   {
     title: 'FECHA',
     dataIndex: 'createdAt',
+    key: 'createdAt',
     width: '110px',
+    defaultSortOrder: 'descend',
+    sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
   },
   {
     title: 'USUARIO',
     dataIndex: 'username',
-    width: '200px',
-
+    width: '180px',
   },
   {
     title: 'TIPO',
@@ -37,14 +39,12 @@ const columnsMovements = [
     dataIndex: 'input',
     className: 'column-center',
     width: '150px',
-
   },
   {
     title: 'SALIDA',
     dataIndex: 'output',
     className: 'column-center',
     width: '150px',
-
   },
 ]
 

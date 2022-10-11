@@ -1,109 +1,106 @@
 <template>
   <a-layout id="inventory">
-    <a-layout-sider v-model:collapsed="collapsed" collapsible>
+    <!-- <a-layout-sider v-model:collapsed="collapsed" collapsible> -->
+    <a-layout-sider
+      :style="{ background: '#001529', overflow: 'auto', height: '100vh', position: 'fixed', left: 0, top: 0, bottom: 0 }"
+    >
       <div class="logo-test">
         <a-image :width="150" :src="MFuentes" :preview="false" />
       </div>
 
-      <a-menu v-model:openKeys="openKeys" v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
+      <a-select v-model:value="checkedRole" :style="{ width: '180px', paddingLeft: '20px' }" :options="optionsRoles">
+      </a-select>
+
+      <a-menu v-model:selectedKeys="selectedKeys" mode="inline" theme="dark">
         <template v-if="checkedRole === ERole.admin">
-          <a-sub-menu key="sub4">
-            <template #title>
-              <span>
-                <shop-outlined />
-                <span>Configuración</span>
-              </span>
-            </template>
-            <a-menu-item key="User" v-if="user.roles.some(item => item === ERole.admin)" @click="onClick('User')">
-              <span>Usuarios</span>
-            </a-menu-item>
-          </a-sub-menu>
+          <a-divider orientation="left" :style="{ color: colorSubMenus, fontSize: '14px', fontWeight: 'normal' }"
+            >Configuración</a-divider
+          >
+          <a-menu-item key="User" v-if="user.roles.some(item => item === ERole.admin)" @click="onClick('User')">
+            <span>Usuarios</span>
+          </a-menu-item>
         </template>
 
         <template v-else>
-          <a-sub-menu key="sub1">
-            <template #title>
-              <span>
-                <shop-outlined />
-                <span>Ventas</span>
-              </span>
-            </template>
-            <a-menu-item key="Sale" @click="onClick('Sale')">
-              <span class="nav-text">Comprobantes</span>
-            </a-menu-item>
-            <a-menu-item key="Quotation" @click="onClick('Quotation')">
-              <span class="nav-text">Cotizaciones</span>
-            </a-menu-item>
-          </a-sub-menu>
+          <a-divider orientation="left" :style="{ color: colorSubMenus, fontSize: '14px', fontWeight: 'normal' }"
+            >Ventas</a-divider
+          >
+          <a-menu-item key="Quotation" @click="onClick('Quotation')">
+            <span class="nav-text">Cotizaciones</span>
+          </a-menu-item>
 
-          <a-sub-menu key="sub2">
-            <template #title>
-              <span>
-                <home-outlined />
-                <span>Inventario</span>
-              </span>
-            </template>
-            <a-menu-item key="Catalog" @click="onClick('Catalog')">
-              <span class="nav-text">Productos</span>
-            </a-menu-item>
-          </a-sub-menu>
+          <a-menu-item key="SaleOrder" @click="onClick('SaleOrder')">
+            <span class="nav-text">Ordenes de venta</span>
+          </a-menu-item>
 
-          <a-sub-menu key="sub3">
-            <template #title>
-              <span>
-                <barcode-outlined />
-                <span>Entidades</span>
-              </span>
-            </template>
-            <a-menu-item key="BusinessEntity" @click="onClick('BusinessEntity')">
-              <span class="nav-text">Razón social</span>
-            </a-menu-item>
-            <a-menu-item key="Contact" @click="onClick('Contact')">
-              <span class="nav-text">Contactos</span>
-            </a-menu-item>
-          </a-sub-menu>
+          <a-divider orientation="left" :style="{ color: colorSubMenus, fontSize: '14px', fontWeight: 'normal' }"
+            >Compras</a-divider
+          >
+          <a-menu-item key="PurchaseOrder" @click="onClick('PurchaseOrder')">
+            <span class="nav-text">Ordenes de compra</span>
+          </a-menu-item>
+
+          <a-divider orientation="left" :style="{ color: colorSubMenus, fontSize: '14px', fontWeight: 'normal' }"
+            >Inventario</a-divider
+          >
+          <a-menu-item key="Catalog" @click="onClick('Catalog')">
+            <span class="nav-text">Productos</span>
+          </a-menu-item>
+
+          <a-divider orientation="left" :style="{ color: colorSubMenus, fontSize: '14px', fontWeight: 'normal' }"
+            >Entidades</a-divider
+          >
+          <a-menu-item key="BusinessEntity" @click="onClick('BusinessEntity')">
+            <span class="nav-text">Razón social</span>
+          </a-menu-item>
+          <a-menu-item key="Contact" @click="onClick('Contact')">
+            <span class="nav-text">Contactos</span>
+          </a-menu-item>
         </template>
       </a-menu>
+
+      <div
+        :style="{
+          position: 'fixed',
+          bottom: '0',
+          left: '0',
+          width: '183px',
+          textAlign: 'center',
+          paddingTop: '10px',
+          paddingBottom: '10px',
+        }"
+      >
+        <span :style="{ display: 'block', background:'#001529', color:'white' }">
+          {{ user.username.toLowerCase() }}
+        </span>
+        <a-button @click="handleLogout" type="link" :style="{ color:'white' }">
+          <template #icon><logout-outlined></logout-outlined></template>
+          Cerrar sesión
+        </a-button>
+      </div>
     </a-layout-sider>
 
-    <!-- <dashboard-view :role="ERole.admin"></dashboard-view> -->
-
-    <a-layout>
-      <a-layout-header :style="{ background: `${colorHeadr}`, height: '64px' }">
-        <a-space :style="{ float: 'right' }">
-          <a-avatar style="color: #f56a00; background-color: #fde3cf">
-            {{ user.fullName.charAt(0).toUpperCase() }}</a-avatar
-          >
-          <span v-if="true" :style="{ color: 'white' }">
-            {{ user.fullName.toLowerCase() }}
-            <!-- <a-tag v-if="role" :color="ERole.admin === role ? '#2db7f5' : '#87d068'">{{ role }}</a-tag> -->
-          </span>
-
-          <a-radio-group v-model:value="checkedRole" button-style="solid">
-            <a-radio-button v-if="user.roles.some(item => item === ERole.admin)" :value="ERole.admin"
-              >Administrador</a-radio-button
-            >
-            <a-radio-button v-if="user.roles.some(item => item === ERole.moderator)" :value="ERole.moderator"
-              >Moderador</a-radio-button
-            >
-            <a-radio-button v-if="user.roles.some(item => item === ERole.user)" :value="ERole.user"
-              >Usuario</a-radio-button
-            >
-          </a-radio-group>
-
-          <a-button @click="handleLogout" type="link" :style="{ height: '100%', color: 'white' }">
-            <template #icon><logout-outlined></logout-outlined></template>
-            Cerrar sesión
-          </a-button>
-        </a-space>
-      </a-layout-header>
-
+    <a-layout :style="{ marginLeft: '200px' }">
       <a-layout-content :style="{ margin: '0 16px', overflow: 'initial' }">
+        <!-- <a-layout-header :style="{ background: `${colorHeader}`, height: '64px' }">
+          <a-space :style="{ float: 'right' }">
+            <a-avatar style="color: #f56a00; background-color: #fde3cf">
+              {{ user.fullName.charAt(0).toUpperCase() }}</a-avatar
+            >
+            <span v-if="true" :style="{ color: 'white' }">
+              {{ user.fullName.toLowerCase() }}
+            </span>
+            <a-button @click="handleLogout" type="link" :style="{ height: '100%', color: 'white' }">
+              <template #icon><logout-outlined></logout-outlined></template>
+              Cerrar sesión
+            </a-button>
+          </a-space>
+        </a-layout-header> -->
         <div
           :style="{
             padding: '14px',
             background: '#fff',
-            height: 'calc( 100vh - 64px )',
+            height: '100vh',
           }"
         >
           <router-view />
@@ -114,34 +111,26 @@
 </template>
 
 <script setup>
-import { computed, createVNode, onMounted, provide, ref, watch, watchPostEffect } from 'vue'
+import { computed, createVNode, onMounted, ref, watch, watchPostEffect } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuthUserStore } from '@/stores/auth-user-store'
 import { message, Modal } from 'ant-design-vue'
 import MFuentes from '@/assets/images/local/fuentes-sider.png'
 
-import {
-  ShopOutlined,
-  HomeOutlined,
-  BarcodeOutlined,
-  LogoutOutlined,
-  ExclamationCircleOutlined,
-} from '@ant-design/icons-vue'
+import { LogoutOutlined, ExclamationCircleOutlined, SmileOutlined } from '@ant-design/icons-vue'
 import _ from 'lodash'
 import useLogin from '@/shared/composables/use-login'
 import { useInvoiceStore } from '@/stores/invoice-store'
 import { useUserStore } from '@/stores/user-store'
-import { ERole, EType } from '@/shared/enums'
+import { ERole } from '@/shared/enums'
 
 // states
 const router = useRouter()
 const route = useRoute()
-const collapsed = ref(false)
 const selectedKeys = ref([])
-const openKeys = ref(['sub1', 'sub2', 'sub3', 'sub4'])
 const checkedRole = ref(ERole.user)
-const colorHeadr = ref('#323639')
-provide(/* key */ 'role', /* value */ checkedRole.value)
+const colorHeader = ref('#323639')
+const colorSubMenus = ref('#F3B77F')
 
 // composables
 const authUserStore = useAuthUserStore()
@@ -151,7 +140,6 @@ const { laodData } = useLogin()
 const loggedIn = computed(() => authUserStore.status.loggedIn)
 const user = computed(() => authUserStore.userCurrent)
 
-const roles = computed(() => authUserStore.roles)
 const invoiceStore = useInvoiceStore()
 const userStore = useUserStore()
 watch(checkedRole, newRole => {
@@ -162,21 +150,20 @@ watch(checkedRole, newRole => {
   }
 
   if (newRole === ERole.user) {
-    colorHeadr.value = '#323639'
+    colorHeader.value = '#323639'
   } else if (newRole === ERole.moderator) {
-    colorHeadr.value = '#384754'
+    colorHeader.value = '#384754'
   } else {
-    colorHeadr.value = '#00162A'
+    colorHeader.value = '#00162A'
   }
 
   if (newRole === ERole.admin) userStore.getAll()
   redirectForRole(newRole)
-
 })
 
 const redirectForRole = role => {
   if (role === ERole.moderator || role === ERole.user) {
-    router.push({ name: 'Sale' })
+    router.push({ name: 'Quotation' })
   } else {
     router.push({ name: 'User' })
   }
@@ -217,9 +204,27 @@ onMounted(() => {
   laodData()
   redirectForRole(ERole.user)
 })
+
+// variables
+const optionsRoles = ref([
+  {
+    value: ERole.user,
+    label: 'Usuario',
+  },
+  {
+    value: ERole.moderator,
+    label: 'Moderador',
+    disabled: !user.value.roles.some(item => item === ERole.moderator),
+  },
+  {
+    value: ERole.admin,
+    label: 'Administrador',
+    disabled: !user.value.roles.some(item => item === ERole.admin),
+  },
+])
 </script>
 
-<style>
+<style lang="less">
 #inventory .logo {
   height: 32px;
   background: rgba(255, 255, 255, 0.2);
@@ -234,7 +239,7 @@ onMounted(() => {
 .site-layout .site-layout-background {
   background: #fff;
 }
-[data-theme='dark'] .site-layout .site-layout-background {
+/* [data-theme='dark'] .site-layout .site-layout-background {
   background: #141414;
-}
+} */
 </style>
